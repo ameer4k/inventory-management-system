@@ -210,7 +210,7 @@ We welcome contributions to improve both versions of the inventory management sy
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](license_file.txt) file for details.
 
 ## 🙏 Acknowledgments
 
