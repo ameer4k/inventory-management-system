@@ -1,0 +1,6 @@
+Panadol,840,10,2027-02-18,PainKiller
+Crestor,30,120,2024-05-18,FatRelated
+Trufen,180,12,2026-04-19,PainKiller
+Aspirin,300,30,2026-08-15,HeartRelated
+Nerofin,70,16,2026-02-18,ColdRelated
+

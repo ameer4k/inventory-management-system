@@ -1,0 +1,5 @@
+Customer Name: Ibrahim             Date: 2025-05-04  
+
+Medicine Name: Panadol             Quantity: 10        UnitPrice: 10         TotalPrice: 0         
+
+Total Bill: 100

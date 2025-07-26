@@ -1,0 +1,106 @@
+#!/bin/bash 
+
+d=$(date +%F)
+displayLs () {
+
+printf "Low in Stock Medicines:\n\n" > ./LsReport.txt
+
+max=$(dialog --stdout --inputbox "Enter The Max Quantity Considered Low-Stock:" 8 60)
+((max=max+1))
+    lines=$(wc -l < ./inventory.txt)
+    for i in $(seq 1 "$lines");
+    do
+        quantity=$(sed -n "${i}p" ./inventory.txt | cut -d',' -f2)   
+        if [[ "$max" -gt "$quantity" ]];
+        then
+             name=$(sed -n "${i}p" ./inventory.txt | cut -d',' -f1) 
+             price=$(sed -n "${i}p" ./inventory.txt | cut -d',' -f3) 
+             expiryDate=$(sed -n "${i}p" ./inventory.txt | cut -d',' -f4) 
+             category=$(sed -n "${i}p" ./inventory.txt | cut -d',' -f5) 
+             
+             printf "Name: %s|Quantity: %d|Price: %d|Expiry Date: %s|Category: %s\n" $name $quantity $price $expiryDate $category >> ./LsReport.txt
+             
+        fi         
+    done
+    
+    dialog --textbox ./LsReport.txt 60 120
+            
+}
+
+showExpired (){
+
+    printf "Expired Medicines:\n\n" > ./LsReport.txt
+    
+    lines=$(wc -l < ./inventory.txt)
+    for i in $(seq 1 "$lines");
+    do
+        expiryDate=$(sed -n "${i}p" ./inventory.txt | cut -d',' -f4)          
+        if [[ "$d" > "$expiryDate" ]];
+        then
+             name=$(sed -n "${i}p" ./inventory.txt | cut -d',' -f1) 
+             quantity=$(sed -n "${i}p" ./inventory.txt | cut -d',' -f2) 
+             price=$(sed -n "${i}p" ./inventory.txt | cut -d',' -f3) 
+             category=$(sed -n "${i}p" ./inventory.txt | cut -d',' -f5) 
+             
+             printf "Name: %s|Quantity: %d|Price: %d|Expiry Date: %s|Category: %s\n" $name $quantity $price $expiryDate $category >> ./LsReport.txt
+             
+        fi         
+    done
+    
+    dialog --textbox ./LsReport.txt 60 140
+}
+
+genSalesReport () {
+
+    date1=$(dialog --stdout --inputbox "Enter The Start Date (in format yyyy-mm-dd):" 8 60)
+    date2=$(dialog --stdout --inputbox "Enter The End Date (in format yyyy-mm-dd):" 8 60)
+    
+    printf "Sales From $date1 To $date2:\n\n" > ./LsReport.txt
+    
+    lines=$(wc -l < ./sales.txt)
+    for i in $(seq 1 "$lines");
+    do
+        sellingDate=$(sed -n "${i}p" ./sales.txt | cut -d',' -f1)          
+        if [[ "$date1" < "$sellingDate" && "$date2" > "$sellingDate" ]];
+        then
+            name=$(sed -n "${i}p" ./sales.txt | cut -d',' -f2)
+            quantity=$(sed -n "${i}p" ./sales.txt | cut -d',' -f3)
+            totalPrice=$(sed -n "${i}p" ./sales.txt | cut -d',' -f4)
+            printf "$sellingDate: MedicineName: $name, Quantity: $quantity, TotalPrice: $totalPrice\n" >> ./LsReport.txt
+        fi
+    done
+    dialog --textbox ./LsReport.txt 60 140
+}
+
+displayTopSelling () {
+
+    topK=$(dialog --stdout --inputbox "How The Number of Top Medicine To Show:" 8 60)
+
+    sort -t',' -k2 -nr ./salesPerMedName.txt | head -n "$topK" > ./LsReport.txt 
+    
+    dialog --stdout --title "Top $topK Selling Medicines:" --textbox ./LsReport.txt 20 60
+             
+}
+
+choice=0
+while [ "$choice" -ne 5 ]
+do
+    choice=$(
+    dialog --stdout --menu "Please Select an Operation" 15 50 5 \
+    1 "Display Low-Stock Medicines" \
+    2 "Show Expired Medicines" \
+    3 "Generate a Sale Report For a Period" \
+    4 "Display Top selling Medicines" \
+    5 "Back")
+
+    case $choice in
+        1) displayLs;;
+        2) showExpired;;
+        3) genSalesReport;;
+        4) displayTopSelling;;
+        5) break;;
+        *) break;;
+
+    esac
+    
+done

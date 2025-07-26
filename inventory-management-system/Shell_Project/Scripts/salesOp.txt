@@ -1,0 +1,85 @@
+#!/bin/bash 
+
+d=$(date +%F)
+
+while dialog --yesno "Make a Sale?" 8 60 #keeps asking the user if they want to make a sale
+do 
+    cName=$(dialog --stdout --inputbox "Enter The name of The Customer:" 8 60) #gets the customer's name
+    
+    noMedicines=$(dialog --stdout --inputbox "Enter The Number of Medicines bought by $cName:" 8 60) #gets the number of meds bought by the user in case they purchased more than 1med
+    
+    printf "Customer Name: %-20sDate: %-12s\n\n" $cName $d > ./bill.txt #overrides the bill file to create a new bill for the given customer 
+    
+    totalBill=0 #initiates the total bill amount
+    
+    for i in $(seq 1 "$noMedicines"); #does the following operation for the num of meds the customer wants to buy
+    do 
+        mName=$(dialog --stdout --inputbox "Enter The name of Medicine $i:" 8 60) 
+        if grep -w "$mName" ./inventory.txt; #checks if the med name exists 
+        then 
+              quantity=$(dialog --stdout --inputbox "Enter The Quantity of Medicine $i:" 8 60)
+              
+              unitPrice=$(grep -w "$mName" ./inventory.txt | cut -d',' -f3)
+              totalPrice=$(( "$unitPrice"*"$quantity" ))
+              
+              oldQ=$(grep -w "$mName" ./inventory.txt | cut -d',' -f2)
+              if [[ "$quantity" -gt "$oldQ" ]]; #checks if there is enough of the med in stock
+              then
+                    echo "Tried to Sell More Quantity Than Exists at $d" >> ./error.txt #if the stock is prints this into the error file 
+                    dialog --infobox "Insufficient Stock!" 4 60
+                    sleep 0.8
+                    continue
+              fi
+
+              newQ=$(( "$oldQ"-"$quantity" )) #calculates the new quantity of the med after the sale 
+              medLineNum=$(grep -n "$mName" ./inventory.txt | cut -d':' -f1)
+              sed -i "${medLineNum}s/$oldQ/$newQ/" ./inventory.txt  #updates the quantity  
+              
+              echo "$d,$mName,$quantity,$totalPrice" >> sales.txt #updates the sales file 
+              
+              ((totalBill=totalBill+totalPrice)) #updates the total bill 
+              
+              printf "Medicine Name: %-20sQuantity: %-10dUnitPrice: %-10d TotalPrice: %-10d\n" $mName $quantity $unitPrice >> ./bill.txt #inserts the med into the customer's bill
+              
+
+              if grep -w "$mName" ./salesPerMedName.txt; #checks the med name in the slaesPerMed file
+              then
+              	    timesSold=$(grep -w "$mName" ./salesPerMedName.txt | cut -d',' -f2)
+              	    newTimesSold=$(( "$timesSold"+"$quantity" ))
+                    LineNum=$(grep -n "$mName" ./salesPerMedName.txt | cut -d':' -f1)
+                    sed -i "${LineNum}s/$timesSold/$newTimesSold/" ./salesPerMedName.txt #updates how many time the med has been sold so we can determin later which med is sold the most 
+              else
+                    echo "$mName,$quantity" >> salesPerMedName.txt
+              fi
+              
+
+              pHistory=" [$d|$mName|$totalPrice]"   #generates a the purchase history field           
+              if grep -w "$cName" ./customers.txt; #if the user exists it adds this field to they purchase history 
+              then
+                    cLineNum=$(grep -n "$cName" ./customers.txt | cut -d':' -f1)
+                    sed -i "${cLineNum}s/ /$pHistory/" ./customers.txt
+              else
+                    contact=$(dialog --stdout --inputbox "Enter The Contact Info of $cName:" 8 60)  
+                    echo "$cName,$contact,PurchaseHistory:$pHistory" >> customers.txt  
+              fi
+
+              #else it asks the user to enter a contact info for the custumer and adds them to the customers file
+        else
+        
+            echo "Tried to Sell a Medicine That Does Not Exist at $d" >> ./error.txt #goes to the next med if this med doesnt exist 
+            dialog --infobox "Medicine With Name: "$mName" Does Not Exists!" 4 60
+            
+            sleep 0.8
+            continue
+                
+        fi
+    done
+    
+    printf "\nTotal Bill: %d" $totalBill >> ./bill.txt #adds the value of the total bill to the bill file 
+    
+    if dialog --yesno "Generate a Bill?" 8 60; #if the user wants to generate a bill it shows them the bill file
+    then
+        dialog --textbox ./bill.txt 40 80
+    fi
+    
+done

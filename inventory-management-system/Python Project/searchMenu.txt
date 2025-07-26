@@ -1,0 +1,73 @@
+#!/bin/bash 
+
+d=$(date +%F)
+
+searchByName () {
+    
+    mName=$(dialog --stdout --inputbox "Enter The name of The Medicine:" 8 60)
+    
+    if grep -w "$mName" ./inventory.txt;
+    then
+        medInfo=$(grep -w "$mName" ./inventory.txt)
+        dialog --msgbox "Medicine Found: $medInfo" 8 80
+    else
+        dialog --msgbox "Medicine Not Found!" 8 60
+        echo "Tried to Search a Medicine That Does Not Exists at $d" >> ./error.txt
+    fi
+
+}
+
+searchByCategory () {
+    
+    mName=$(dialog --stdout --inputbox "Enter The Category:" 8 60)
+    
+    if grep -w "$mName" ./inventory.txt;
+    then
+        medInfo=$(grep -w "$mName" ./inventory.txt)
+        dialog --msgbox "Medicines Found: 
+$medInfo" 20 80
+
+    else
+        dialog --msgbox "Category Not Found!" 8 60
+        echo "Tried to Search a Category That Does Not Exists at $d" >> ./error.txt
+    fi
+
+}
+
+retrieveHistory () {
+
+    cName=$(dialog --stdout --inputbox "Enter The name of The Customer:" 8 60)
+    
+    if grep -w "$cName" ./customers.txt;
+    then
+        pHistory=$(grep -w "$cName" ./customers.txt | cut -d' ' -f2)
+        dialog --msgbox "Custmer's Purchase History: 
+$pHistory" 20 80
+    else
+        dialog --msgbox "Customer Not Found!" 8 60
+        echo "Tried to Search a Customer That Does Not Exists at $d" >> ./error.txt
+    fi
+    
+}
+
+
+choice=0
+while [ "$choice" -ne 5 ]
+do
+    choice=$(
+    dialog --stdout --menu "Please Select an Operation" 15 50 4 \
+    1 "Search Medicine By Name" \
+    2 "Search Medicines By Category" \
+    3 "Retrieve Customer's Purchase History" \
+    4 "Back")
+
+    case $choice in
+        1) searchByName;;
+        2) searchByCategory;;
+        3) retrieveHistory;;
+        4) break;;
+        *) break;;
+
+    esac
+    
+done
